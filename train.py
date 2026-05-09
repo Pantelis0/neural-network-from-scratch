@@ -44,6 +44,8 @@ def evaluate(network, X, y_onehot):
 
 
 if __name__ == "__main__":
+    from network import Network, save_model
+
     np.random.seed(0)
 
     X_train, y_train, X_test, y_test = load_mnist()
@@ -55,6 +57,9 @@ if __name__ == "__main__":
 
     test_acc = evaluate(net, X_test, y_test_oh)
     print(f"\nTest accuracy: {test_acc * 100:.2f}%")
+
+    save_model(net, "saved_models/model.npz")
+    print("Model saved to saved_models/model.npz")
 
     plt.figure(figsize=(8, 4))
     plt.plot(range(1, len(history) + 1), history, linewidth=2)
