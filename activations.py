@@ -10,6 +10,13 @@ def relu_backward(dA, Z):
     return dA * (Z > 0)
 
 
+def softmax(Z):
+    # Subtract row-wise max for numerical stability before exponentiating
+    Z = Z - Z.max(axis=1, keepdims=True)
+    exp = np.exp(Z)
+    return exp / exp.sum(axis=1, keepdims=True)
+
+
 if __name__ == "__main__":
     Z = np.array([-1.0, 0.0, 2.0])
 
