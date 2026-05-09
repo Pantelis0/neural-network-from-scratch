@@ -36,14 +36,25 @@ def train(network, X, y_onehot, epochs, batch_size, lr):
     return loss_history
 
 
+def evaluate(network, X, y_onehot):
+    probs = network.forward(X)
+    preds = np.argmax(probs, axis=1)
+    labels = np.argmax(y_onehot, axis=1)
+    return np.mean(preds == labels)
+
+
 if __name__ == "__main__":
     np.random.seed(0)
 
-    X_train, y_train, _, _ = load_mnist()
+    X_train, y_train, X_test, y_test = load_mnist()
     y_train_oh = one_hot(y_train)
+    y_test_oh = one_hot(y_test)
 
     net = Network([784, 128, 64, 10])
-    history = train(net, X_train, y_train_oh, epochs=20, batch_size=64, lr=0.1)
+    history = train(net, X_train, y_train_oh, epochs=100, batch_size=64, lr=0.1)
+
+    test_acc = evaluate(net, X_test, y_test_oh)
+    print(f"\nTest accuracy: {test_acc * 100:.2f}%")
 
     plt.figure(figsize=(8, 4))
     plt.plot(range(1, len(history) + 1), history, linewidth=2)
