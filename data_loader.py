@@ -2,8 +2,9 @@ import os
 import urllib.request
 import numpy as np
 
-MNIST_URL = "https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz"
-DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "mnist.npz")
+MNIST_URL   = "https://storage.googleapis.com/tensorflow/tf-keras-datasets/mnist.npz"
+DATA_PATH   = os.path.join(os.path.dirname(__file__), "data", "mnist.npz")
+EMNIST_PATH = os.path.join(os.path.dirname(__file__), "data", "emnist_digits.npz")
 
 
 def _download_mnist():
@@ -35,7 +36,37 @@ def load_mnist():
         X_test, y_test = f["x_test"], f["y_test"]
 
     X_train = X_train.reshape(-1, 784).astype(np.float64) / 255.0
-    X_test = X_test.reshape(-1, 784).astype(np.float64) / 255.0
+    X_test  = X_test.reshape(-1, 784).astype(np.float64) / 255.0
+
+    return X_train, y_train, X_test, y_test
+
+
+def load_combined():
+    """
+    Returns MNIST + EMNIST digits merged into one training set.
+      X_train: (300000, 784) float64  — 60k MNIST + 240k EMNIST
+      y_train: (300000,)     int
+      X_test:  (50000, 784)  float64  — 10k MNIST + 40k EMNIST
+      y_test:  (50000,)      int
+    EMNIST must already be downloaded to data/emnist_digits.npz.
+    """
+    X_m, y_m, X_mt, y_mt = load_mnist()
+
+    if not os.path.exists(EMNIST_PATH):
+        raise FileNotFoundError(
+            f"EMNIST not found at {EMNIST_PATH}. "
+            "Run the extraction script first."
+        )
+    with np.load(EMNIST_PATH) as f:
+        X_e  = f["x_train"].reshape(-1, 784).astype(np.float64) / 255.0
+        y_e  = f["y_train"].astype(np.int64)
+        X_et = f["x_test"].reshape(-1, 784).astype(np.float64) / 255.0
+        y_et = f["y_test"].astype(np.int64)
+
+    X_train = np.concatenate([X_m,  X_e],  axis=0)
+    y_train = np.concatenate([y_m,  y_e],  axis=0)
+    X_test  = np.concatenate([X_mt, X_et], axis=0)
+    y_test  = np.concatenate([y_mt, y_et], axis=0)
 
     return X_train, y_train, X_test, y_test
 

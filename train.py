@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from network import Network
 from losses import cross_entropy_loss
-from data_loader import load_mnist, one_hot
+from data_loader import load_mnist, load_combined, one_hot
 
 
 def train(network, X, y_onehot, epochs, batch_size, lr):
@@ -48,7 +48,8 @@ if __name__ == "__main__":
 
     np.random.seed(0)
 
-    X_train, y_train, X_test, y_test = load_mnist()
+    X_train, y_train, X_test, y_test = load_combined()
+    print(f"Training on {X_train.shape[0]:,} samples ({X_train.shape[0]//1000}k MNIST+EMNIST combined)")
     y_train_oh = one_hot(y_train)
     y_test_oh = one_hot(y_test)
 
