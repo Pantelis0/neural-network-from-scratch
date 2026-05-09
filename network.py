@@ -45,29 +45,52 @@ class Network:
             layer.b -= lr * layer.db
 
 
+def save_model(network, path):
+    arrays = {}
+    for i, layer in enumerate(network.layers):
+        arrays[f"W{i}"] = layer.W
+        arrays[f"b{i}"] = layer.b
+    np.savez(path, **arrays)
+
+
+def load_model(path, layer_sizes):
+    network = Network(layer_sizes)
+    data = np.load(path)
+    for i, layer in enumerate(network.layers):
+        layer.W = data[f"W{i}"]
+        layer.b = data[f"b{i}"]
+    return network
+
+
 if __name__ == "__main__":
     from data_loader import load_mnist, one_hot
+    from train import train, evaluate
+    import os
 
     np.random.seed(0)
-    X_train, y_train, _, _ = load_mnist()
+    X_train, y_train, X_test, y_test = load_mnist()
     y_train_oh = one_hot(y_train)
+    y_test_oh  = one_hot(y_test)
 
-    # Small batch for the test
-    X_batch = X_train[:64]
-    y_batch = y_train_oh[:64]
-
+    # Train a small network quickly just to get non-random weights
     net = Network([784, 128, 64, 10])
+    train(net, X_train, y_train_oh, epochs=5, batch_size=64, lr=0.1)
 
-    probs = net.forward(X_batch)
-    loss_before = cross_entropy_loss(probs, y_batch)
+    # Predictions before save
+    sample = X_test[:10]
+    probs_original = net.forward(sample)
 
-    net.backward(probs, y_batch)
-    net.update(lr=0.1)
+    # Save
+    save_path = "saved_models/model.npz"
+    save_model(net, save_path)
+    print(f"Model saved to {save_path}")
 
-    probs_after = net.forward(X_batch)
-    loss_after = cross_entropy_loss(probs_after, y_batch)
+    # Load into a fresh network
+    net2 = load_model(save_path, [784, 128, 64, 10])
+    probs_loaded = net2.forward(sample)
 
-    print(f"Loss before update: {loss_before:.4f}")
-    print(f"Loss after update:  {loss_after:.4f}")
-    assert loss_after < loss_before, "Loss did not decrease after one update"
-    print("Check passed — loss decreased.")
+    # Verify bit-for-bit identical
+    assert np.array_equal(probs_original, probs_loaded), "Predictions differ after reload!"
+    print("Round-trip check passed — predictions identical before and after save/load.")
+    print(f"Predicted digits: {np.argmax(probs_loaded, axis=1)}")
+    print(f"True labels:      {y_test[:10]}")
