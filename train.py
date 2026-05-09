@@ -2,12 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from network import Network
 from losses import cross_entropy_loss
+from optimizer import Adam
 from data_loader import load_mnist, load_combined, one_hot
 
 
-def train(network, X, y_onehot, epochs, batch_size, lr):
+def train(network, X, y_onehot, epochs, batch_size, lr=0.001):
     N = X.shape[0]
     loss_history = []
+    optimizer = Adam(network, lr=lr)
 
     for epoch in range(1, epochs + 1):
         # Shuffle at the start of every epoch
@@ -24,7 +26,7 @@ def train(network, X, y_onehot, epochs, batch_size, lr):
             probs = network.forward(X_batch)
             epoch_loss += cross_entropy_loss(probs, y_batch)
             network.backward(probs, y_batch)
-            network.update(lr)
+            optimizer.step()
             num_batches += 1
 
         mean_loss = epoch_loss / num_batches
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     y_test_oh = one_hot(y_test)
 
     net = Network([784, 128, 64, 10])
-    history = train(net, X_train, y_train_oh, epochs=100, batch_size=64, lr=0.1)
+    history = train(net, X_train, y_train_oh, epochs=100, batch_size=64, lr=0.001)
 
     test_acc = evaluate(net, X_test, y_test_oh)
     print(f"\nTest accuracy: {test_acc * 100:.2f}%")
